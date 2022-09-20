@@ -1,6 +1,12 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-waffle")
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-  solidity: "0.8.17",
+  solidity: {
+    version: "0.8.0",
+  },
+  paths: {
+    artifacts: './client/src/artifacts'
+  }
 };
