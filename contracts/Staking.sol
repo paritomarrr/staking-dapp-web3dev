@@ -78,5 +78,21 @@ contract Staking {
     function getPositionIdsForAddress(address walletAddress) external view returns (uint[] memory) {
         return positionIdsByAddress[walletAddress];
     }
+
+    function changeUnlockDate(uint positionnId, uint newUnlockDate) external {
+        require(owner == msg.sender, "Only the owner can modify the staking period");
+        positions[positionnId].unlockDate = newUnlockDate;
+    }
+
+    function closePosition(uint positionnId) external {
+        require(positions[positionnId].walletAddress == msg.sender, "Only position creator can modify the position");
+        require(positions[positionnId].open == true, "Position is closed");
+        positions[positionnId].open = false;
+
+        if(block.timestamp > positions[positionnId].unlockDate) {
+            uint amount = positions[positionnId].weiStaked + positions[positionnId].weiInterest;
+            payable(msg.sender).call{value: amount}("");
+        }
+    }
     
 }
