@@ -97,11 +97,34 @@ describe("Staking", function () {
   describe("modifyLockPeriods", function() {
     describe('owner', function() {
       it("should create a new lock period", async function() {
-        await staking.connect(signer1).modifyLockPeriods(100, 999)
+        await staking.connect(signer1).modifyLockPeriods(100, 999);
+        expect (await staking.tiers(100)).to.equal(999)
+        expect(await staking.lockPeriods(3)).to.equal(100)
       })
       it('should modify an existing lock period', async function () {
-
+        await staking.connect(signer1).modifyLockPeriods(30, 150);
+        expect(await staking.tiers(30)).to.equal(150)
       })
+    })
+
+    describe("non-owner", function() {
+      it("reverts", async function () {
+        expect (staking.connect(signer2).modifyLockPeriods(100,999)).to.be.revertedWith("Only owner may modify staking periods")
+      })
+    })
+  })
+
+  describe('getLockPeriods', function () {
+    it('returns all lock periods', async () => {
+      const lockPeriods = await staking.getLockPeriods()
+      expect(lockPeriods.map(v => Number(v._hex))).to.eql([30,90,180])
+    })
+  })
+
+  describe('getInterestRate', function () {
+    it('returns the interest raet for a specific lockPeriod', async () => {
+      const interestRate = await staking.getInterestRate(30)
+      expect(interestRate).to.equal(700)
     })
   })
 });
