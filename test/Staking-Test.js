@@ -54,15 +54,54 @@ describe("Staking", function () {
 
       position = await staking.positions(0)
 
-      expect(position.positionnId).to.equal(0)
+      expect(position.positionId).to.equal(0)
       expect(position.createdDate).to.equal(0)
       expect(position.percentInterest).to.equal(0)
       expect(position.unlockDate).to.equal(0)
-      expect(position.weiStaking).to.equal(0)
-      expect(position.weiStaking).to.equal(0)
+      expect(position.weiStaked).to.equal(0)
       expect(position.weiInterest).to.equal(0)
       expect(position.open).to.equal(false)
       expect(await staking.currentPositionId()).to.equal(0)
+
+      data = {value: transferAmount}
+      const transaction = await staking.connect(signer1).stakeEther(90, data);
+      const receipt = await transaction.wait()
+      const block = await provider.getBlock(receipt.blockNumber) // to get created date
+
+      position = await staking.positions(0)
+
+      expect(position.positionId).to.equal(0)
+      expect(position.walletAddress).to.equal(signer1.address)
+      expect(position.createdDate).to.equal(block.timestamp)
+      expect(position.percentInterest).to.equal(1000)
+      expect(position.unlockDate).to.equal(block.timestamp + (86400 * 90))
+      expect(position.weiStaked).to.equal(transferAmount)
+      expect(position.weiInterest).to.equal(ethers.BigNumber.from(transferAmount).mul(1000).div(10000))
+      expect(position.open).to.equal(true)
+
+      expect(await staking.currentPositionId()).to.equal(1)
+    })
+
+    it('adds address and positionid to positionIdsByAddress', async function () {
+      const transferAmount = ethers.utils.parseEther('0.5')
+      const data = {value: transferAmount}
+      await staking.connect(signer1).stakeEther(30, data)
+      await staking.connect(signer2).stakeEther(90, data)
+
+      expect(await staking.positionIdsByAddress(signer1.address, 0)).to.equal(0)
+      expect(await staking.positionIdsByAddress(signer1.address, 1)).to.equal(1) 
+      expect(await staking.positionIdsByAddress(signer2.address, 0)).to.equal(2)
     })
   });
+
+  describe("modifyLockPeriods", function() {
+    describe('owner', function() {
+      it("should create a new lock period", async function() {
+        await staking.connect(signer1).modifyLockPeriods(100, 999)
+      })
+      it('should modify an existing lock period', async function () {
+
+      })
+    })
+  })
 });
