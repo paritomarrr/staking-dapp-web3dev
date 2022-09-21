@@ -41,10 +41,10 @@ contract Staking {
             currentPositionId,
             msg.sender,
             block.timestamp,
-            block.timestamp + (numDays * 1 days),
+            block.timestamp + (numDays * 15180),
             tiers[numDays],
             msg.value,
-            calculateInterest(tiers[numDays], numDays, msg.value),
+            calculateInterest(tiers[numDays], msg.value),
             true
         );
 
@@ -53,7 +53,7 @@ contract Staking {
     }
 
 
-    function calculateInterest(uint basisPoints, uint numDays, uint weiAmount) private pure returns (uint) {
+    function calculateInterest(uint basisPoints, uint weiAmount) private pure returns (uint) {
         return basisPoints * weiAmount / 10000;
     }
 
@@ -84,5 +84,17 @@ contract Staking {
         positions[positionnId].unlockDate = newUnlockDate;
     }
 
+  function closePosition(uint positionnId) external {
+        require(positions[positionnId].walletAddress == msg.sender, "Only position creator can modify the position");
+        require(positions[positionnId].open == true, "Position is closed");
+        positions[positionnId].open = false;
+
+        if(block.timestamp > positions[positionnId].unlockDate) {
+            uint amount = positions[positionnId].weiStaked + positions[positionnId].weiInterest;
+            payable(msg.sender).call{value: amount}("");
+        } else {
+            payable(msg.sender).call{value: positions[positionnId].weiStaked}("");
+        }
+    }
   
 }
